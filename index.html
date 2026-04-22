@@ -375,7 +375,7 @@
 <body>
 
 <audio id="bgm" loop>
-  <!-- <source src="your-song.mp3" type="audio/mpeg"> -->
+  <source src="諾然-我一定會幸福的.mp3" type="audio/mpeg">
 </audio>
 
 <!-- ── 左上計時器 ── -->
@@ -726,8 +726,9 @@ const bgm      = document.getElementById('bgm');
 const musicBtn = document.getElementById('music-btn');
 let playing    = false;
 musicBtn.addEventListener('click', () => {
-  if (!bgm.src || bgm.src === window.location.href) {
-    alert('請先在 HTML 中設定音樂來源 <source src="...">');
+  const src = bgm.querySelector('source')?.src || bgm.src;
+  if (!src || src === window.location.href) {
+    alert('請先設定音樂來源 <source src="...">');
     return;
   }
   playing ? bgm.pause() : bgm.play();
