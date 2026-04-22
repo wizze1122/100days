@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>100 Days ♡</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Zeyada&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --cream:  #fdf6ee;
+      --blush:  #f5d5cb;
+      --rose:   #c9746a;
+      --wine:   #7a3a35;
+      --sand:   #e8d5b7;
+      --text:   #3d2b28;
+      --muted:  #9e7c78;
+      --white:  #fffaf6;
+      --shadow: rgba(122,58,53,0.15);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--cream);
+      color: var(--text);
+      font-family: 'Noto Serif TC', serif;
+    }
+
+    /* ── Scene System ── */
+    .scene {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.85s ease;
+      padding: 2rem;
+    }
+    .scene.active { opacity: 1; pointer-events: all; }
+
+    /* ── Progress Dots ── */
+    #progress {
+      position: fixed; bottom: 2rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; gap: 0.6rem; z-index: 100;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--blush); border: 1.5px solid var(--rose);
+      transition: background 0.4s, transform 0.4s;
+    }
+    .dot.active { background: var(--rose); transform: scale(1.3); }
+
+    /* ── Nav Buttons ── */
+    .nav-btn-base {
+      position: fixed; bottom: 4rem; z-index: 100;
+      border: none; border-radius: 2rem;
+      padding: 0.75rem 1.6rem;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 0.92rem; letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s, opacity 0.3s;
+    }
+    .nav-btn-base.gone { opacity: 0; pointer-events: none; }
+
+    #next-btn {
+      right: 2.5rem;
+      background: var(--rose); color: var(--white);
+      box-shadow: 0 4px 20px var(--shadow);
+    }
+    #next-btn:hover { background: var(--wine); transform: translateY(-2px); box-shadow: 0 8px 28px var(--shadow); }
+    #next-btn:active { transform: translateY(0); }
+
+    #prev-btn {
+      left: 2.5rem;
+      background: transparent; color: var(--rose);
+      border: 1.5px solid var(--rose);
+    }
+    #prev-btn:hover { background: var(--blush); transform: translateY(-2px); }
+    #prev-btn:active { transform: translateY(0); }
+
+    /* ── Music Button ── */
+    #music-btn {
+      position: fixed; top: 1.5rem; right: 1.5rem; z-index: 200;
+      background: transparent; border: 1.5px solid var(--rose);
+      color: var(--rose); border-radius: 50%;
+      width: 2.8rem; height: 2.8rem;
+      font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.3s, color 0.3s;
+    }
+    #music-btn:hover { background: var(--blush); }
+    #music-btn.playing { background: var(--rose); color: var(--white); }
+
+    /* ── Counter ── */
+    #counter {
+      position: fixed; top: 1.5rem; left: 1.5rem; z-index: 200;
+      font-family: 'Noto Serif TC', serif;
+      font-size: 0.68rem; color: var(--muted);
+      letter-spacing: 0.05em; line-height: 2;
+    }
+    .counter-label { color: var(--muted); font-size: 0.68rem; }
+    .counter-row {
+      display: flex; align-items: baseline;
+      gap: 0.15em; white-space: nowrap;
+    }
+    .counter-row .val { font-size: 1rem; color: var(--rose); font-weight: 600; }
+    .counter-row .unit { font-size: 0.68rem; color: var(--muted); }
+
+    /* ════════════════════
+       SCENE 1 — 封面
+    ════════════════════ */
+    #scene-1 {
+      background: radial-gradient(ellipse at 55% 45%, #fdf0e8 0%, var(--cream) 72%);
+    }
+    .cover-bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
+    .petal {
+      position: absolute; border-radius: 50% 0 50% 0;
+      background: var(--blush); opacity: 0;
+      animation: fall linear infinite;
+    }
+    @keyframes fall {
+      0%   { transform: translateY(-60px) rotate(0deg);   opacity: 0.6; }
+      100% { transform: translateY(110vh) rotate(360deg); opacity: 0;   }
+    }
+
+    .cover-wrap {
+      position: relative; z-index: 1;
+      display: flex; flex-direction: column;
+      align-items: center; gap: 2rem;
+    }
+    .cover-photos {
+      display: flex; gap: 2.8rem; align-items: flex-end;
+    }
+    .cover-photo-card {
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+    }
+    .cover-avatar {
+      width: clamp(110px, 20vw, 155px);
+      height: clamp(110px, 20vw, 155px);
+      border-radius: 50%; overflow: hidden;
+      border: 4px solid var(--white);
+      box-shadow: 0 8px 32px var(--shadow);
+      background: linear-gradient(135deg, var(--blush), var(--sand));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 3rem;
+    }
+    .cover-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+    .cover-photo-card:nth-child(1) .cover-avatar {
+      animation: floatA 4s ease-in-out infinite;
+    }
+    .cover-photo-card:nth-child(3) .cover-avatar {
+      animation: floatB 4.6s ease-in-out infinite;
+    }
+    @keyframes floatA {
+      0%,100% { transform: translateY(0) rotate(-1.5deg); }
+      50%      { transform: translateY(-12px) rotate(1deg); }
+    }
+    @keyframes floatB {
+      0%,100% { transform: translateY(0) rotate(1.5deg); }
+      50%      { transform: translateY(-10px) rotate(-1deg); }
+    }
+
+    .cover-person-name {
+      font-family: 'Zeyada', cursive;
+      font-size: clamp(1.3rem, 3.5vw, 1.8rem);
+      color: var(--wine);
+    }
+    .cover-heart {
+      font-size: 2.2rem; color: var(--rose);
+      animation: heartbeat 1.6s ease-in-out infinite;
+      position: relative; top: -1.2rem;
+    }
+    @keyframes heartbeat {
+      0%,100% { transform: scale(1); }
+      30%      { transform: scale(1.25); }
+      50%      { transform: scale(0.92); }
+    }
+    .cover-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1rem, 3vw, 1.4rem);
+      letter-spacing: 0.22em; text-transform: uppercase;
+      color: var(--text); text-align: center;
+      opacity: 0; animation: fadeUp 1s ease 0.5s forwards;
+    }
+    .cover-subtitle {
+      font-size: 0.78rem; color: var(--muted);
+      letter-spacing: 0.15em; text-align: center;
+      opacity: 0; animation: fadeUp 1s ease 0.9s forwards;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ════════════════════
+       SCENE 2 — 開場
+    ════════════════════ */
+    #scene-2 { background: var(--cream); }
+    .scene-2-bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; }
+    .s2-content {
+      position: relative; z-index: 1;
+      text-align: center; display: flex; flex-direction: column;
+      align-items: center; gap: 1.2rem;
+    }
+    .names-big {
+      font-family: 'Zeyada', cursive;
+      font-size: clamp(2.8rem, 8vw, 5.5rem);
+      color: var(--wine);
+      opacity: 0; animation: fadeUp 1.2s ease 0.3s forwards;
+    }
+    .divider-heart {
+      font-size: 1.4rem; color: var(--rose);
+      opacity: 0; animation: fadeUp 0.8s ease 1s forwards;
+    }
+    .days-label {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.1rem, 3vw, 1.6rem);
+      letter-spacing: 0.2em; text-transform: uppercase; color: var(--text);
+      opacity: 0; animation: fadeUp 0.8s ease 1.4s forwards;
+    }
+    .lang-cycle {
+      font-size: 0.9rem; color: var(--muted);
+      letter-spacing: 0.12em; min-height: 1.4em;
+      opacity: 0; animation: fadeUp 0.8s ease 1.8s forwards;
+      transition: opacity 0.5s;
+    }
+    .date-stamp {
+      font-size: 0.78rem; color: var(--muted); letter-spacing: 0.15em;
+      opacity: 0; animation: fadeUp 0.8s ease 2.2s forwards;
+    }
+
+    /* ════════════════════
+       SCENE 3 — Timeline
+    ════════════════════ */
+    #scene-3 { background: var(--white); gap: 2rem; }
+    .scene-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.3rem, 4vw, 2rem);
+      color: var(--wine); letter-spacing: 0.06em; text-align: center;
+    }
+    .scene-title small {
+      display: block; font-family: 'Noto Serif TC', serif;
+      font-size: 0.75rem; color: var(--muted);
+      margin-top: 0.3rem; letter-spacing: 0.15em; font-style: italic;
+    }
+    .timeline {
+      display: flex; flex-direction: column; gap: 0;
+      max-width: 520px; width: 100%;
+      max-height: 60vh; overflow-y: auto; padding-right: 0.5rem;
+    }
+    .timeline::-webkit-scrollbar { width: 4px; }
+    .timeline::-webkit-scrollbar-thumb { background: var(--blush); border-radius: 2px; }
+    .tl-item {
+      display: flex; gap: 1.2rem; align-items: flex-start;
+      padding: 1rem 0 1rem 1.4rem;
+      border-left: 2px solid var(--blush); position: relative;
+      opacity: 0; transform: translateX(-15px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .tl-item.visible { opacity: 1; transform: translateX(0); }
+    .tl-item::before {
+      content: ''; position: absolute; left: -6px; top: 1.35rem;
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--rose); border: 2px solid var(--white);
+      box-shadow: 0 0 0 2px var(--rose);
+    }
+    .tl-day { font-family: 'Playfair Display', serif; font-size: 1.4rem; color: var(--rose); min-width: 3rem; line-height: 1; }
+    .tl-day small { display: block; font-family: 'Noto Serif TC', serif; font-size: 0.65rem; color: var(--muted); }
+    .tl-text { font-size: 0.9rem; line-height: 1.8; color: var(--text); }
+    .tl-text strong { color: var(--wine); }
+
+    /* ════════════════════
+       SCENE 4 — Gallery
+    ════════════════════ */
+    #scene-4 { background: var(--sand); padding-top: 4rem; }
+    .gallery-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1.2rem; max-width: 700px; width: 100%;
+      max-height: 65vh; overflow-y: auto; padding: 0.5rem;
+    }
+    .gallery-grid::-webkit-scrollbar { width: 4px; }
+    .gallery-grid::-webkit-scrollbar-thumb { background: var(--rose); border-radius: 2px; }
+    .polaroid {
+      background: var(--white); padding: 0.7rem 0.7rem 2.2rem;
+      box-shadow: 0 4px 18px var(--shadow);
+      transform: rotate(var(--rot));
+      transition: transform 0.35s ease, box-shadow 0.35s ease; cursor: pointer;
+    }
+    .polaroid:hover { transform: rotate(0deg) scale(1.07); box-shadow: 0 12px 36px var(--shadow); z-index: 10; position: relative; }
+    .polaroid img { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
+    .photo-placeholder {
+      width: 100%; aspect-ratio: 1/1;
+      background: linear-gradient(135deg, var(--blush) 0%, var(--sand) 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: var(--muted); font-size: 1.8rem; gap: 0.4rem;
+    }
+    .photo-placeholder span { font-size: 0.65rem; letter-spacing: 0.1em; }
+    .polaroid-caption { text-align: center; font-family: 'Zeyada', cursive; font-size: 1rem; color: var(--muted); margin-top: 0.5rem; }
+
+    #lightbox {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(61,43,40,0.88);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.4s;
+    }
+    #lightbox.open { opacity: 1; pointer-events: all; }
+    #lightbox img { max-width: 88vw; max-height: 88vh; border-radius: 4px; box-shadow: 0 16px 60px rgba(0,0,0,0.5); }
+    #lightbox-close { position: absolute; top: 1.5rem; right: 1.5rem; color: #fff; font-size: 2rem; cursor: pointer; background: none; border: none; }
+
+    /* ════════════════════
+       SCENE 5 — 告白
+    ════════════════════ */
+    #scene-5 { background: var(--cream); padding-bottom: 10rem; }
+    .letter { max-width: 480px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1.4rem; }
+    .letter-icon { font-size: 3rem; animation: heartbeat 1.5s ease infinite; }
+    .letter-title { font-family: 'Playfair Display', serif; font-size: clamp(1.4rem, 5vw, 2.2rem); color: var(--wine); line-height: 1.3; }
+    .letter-body { font-size: 0.95rem; line-height: 2.1; color: var(--text); }
+    .letter-sign { font-family: 'Zeyada', cursive; font-size: 1.8rem; color: var(--rose); }
+    .date-back { font-size: 0.78rem; color: var(--muted); letter-spacing: 0.12em; }
+    .heart-btn {
+      margin-top: 0.6rem; background: transparent; border: 2px solid var(--rose);
+      color: var(--rose); border-radius: 3rem; padding: 0.7rem 2rem;
+      font-size: 1rem; font-family: 'Noto Serif TC', serif; cursor: pointer;
+      letter-spacing: 0.08em; transition: background 0.3s, color 0.3s, transform 0.2s;
+    }
+    .heart-btn:hover { background: var(--rose); color: var(--white); transform: scale(1.05); }
+  </style>
+</head>
+<body>
+
+<audio id="bgm" loop>
+  <!-- <source src="your-song.mp3" type="audio/mpeg"> -->
+</audio>
+
+<!-- ── 左上計時器 ── -->
+<div id="counter">
+  <div class="counter-label">在一起已經</div>
+  <div class="counter-row">
+    <span class="val" id="cnt-months">—</span><span class="unit">個月</span>&nbsp;
+    <span class="val" id="cnt-days">—</span><span class="unit">天</span>
+  </div>
+  <div class="counter-row">
+    <span class="val" id="cnt-seconds">—</span><span class="unit">秒</span>
+  </div>
+</div>
+
+<!-- ── 右上音樂 ── -->
+<button id="music-btn" title="播放/暫停">♪</button>
+
+<!-- ── 翻頁按鈕 ── -->
+<button id="prev-btn" class="nav-btn-base gone">← 上一頁</button>
+<button id="next-btn" class="nav-btn-base">繼續 →</button>
+
+<!-- ── 進度點 ── -->
+<div id="progress">
+  <div class="dot active"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+  <div class="dot"></div>
+</div>
+
+<!-- ══════════════════════════════════
+     SCENE 1 ─ 封面（兩人照片）
+══════════════════════════════════ -->
+<section id="scene-1" class="scene active">
+  <div class="cover-bg" id="cover-petals"></div>
+  <div class="cover-wrap">
+
+    <div class="cover-photos">
+
+      <!-- A 的頭像 -->
+      <div class="cover-photo-card">
+        <div class="cover-avatar">
+          <!--
+            ★ 替換區域 ★
+            把下面的 emoji 換成：
+            <img src="photo-a.jpg" alt="A 的照片">
+          -->
+          <!--🧑-->
+          <img src="pic/photo_a.jpg">
+        </div>
+        <div class="cover-person-name">
+          <!-- ★ 改成 A 的名字 -->
+          阿呆
+        </div>
+      </div>
+
+      <!-- 中間愛心 -->
+      <div class="cover-heart">♡</div>
+
+      <!-- B 的頭像 -->
+      <div class="cover-photo-card">
+        <div class="cover-avatar">
+          <!--
+            ★ 替換區域 ★
+            把下面的 emoji 換成：
+            <img src="photo-b.jpg" alt="B 的照片">
+          -->
+            <!--👩-->
+            <img src="pic/photo_b.jpg">
+        </div>
+        <div class="cover-person-name">
+          <!-- ★ 改成 B 的名字 -->
+          阿笨
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cover-title">100 Days Anniversary</div>
+    <div class="cover-subtitle">
+      <!-- ★ 改成你們在一起的日期 -->
+      2026.01.13 &nbsp;—&nbsp; 2026.04.22
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SCENE 2 ─ 開場
+══════════════════════════════════ -->
+<section id="scene-2" class="scene">
+  <div class="scene-2-bg" id="petals-container"></div>
+  <div class="s2-content">
+    <div class="names-big">
+      <!-- ★ 改成你們的名字 -->
+      芸嫻 &amp; 瑋志
+    </div>
+    <div class="divider-heart">✦ ♡ ✦</div>
+    <div class="days-label">100 Days Together</div>
+    <div class="lang-cycle" id="lang-cycle">100 天紀念日</div>
+    <div class="date-stamp">
+      <!-- ★ 改成正確日期 -->
+      2026.01.13 &nbsp;—&nbsp; 2026.04.22
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SCENE 3 ─ 時光足跡
+══════════════════════════════════ -->
+<section id="scene-3" class="scene">
+  <div class="scene-title">
+    時光足跡
+    <small>— The Journey of 100 Days —</small>
+  </div>
+  <div class="timeline" id="timeline">
+    <!-- ★ 替換：每個 .tl-item 是一個重要時刻，可複製新增 -->
+    <div class="tl-item">
+      <div class="tl-day">Day 1<small>開始</small></div>
+      <div class="tl-text"><strong>我們的第一次見面：</strong>就直接開房間？！又驚又喜ㄉ</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-day">Day 19<small>拍貼機</small></div>
+      <div class="tl-text"><strong>人生第一拍貼：</strong>花了好多時間想動作，選照片、音樂，但是成果很值得。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-day">Day 30<small>一個月</small></div>
+      <div class="tl-text"><strong>第一個情人節：</strong>雖然沒有見面，因為剛好過年期間，但是每天都在想妳，巴不得把你抓來我家住。</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-day">Day 46<small>見家長</small></div>
+      <div class="tl-text"><strong>打保齡球：</strong>莫名的出門後就見到家長了，我當下真的鼓起了我好大好大的勇氣，故作鎮定，但是我卻覺得很自在，沒有太多的壓力，因為你就在我旁邊跟我一起❤️</div>
+    </div>
+    <div class="tl-item">
+      <div class="tl-day">Day 100<small>今天</small></div>
+      <div class="tl-text"><strong>100 天！</strong>雖然我還在國外但是明天就要見面了！</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SCENE 4 ─ 數位相簿
+══════════════════════════════════ -->
+<section id="scene-4" class="scene">
+  <div class="scene-title">
+    我們的瞬間
+    <small>— Our Moments —</small>
+  </div>
+  <div class="gallery-grid" id="gallery">
+    <!-- ★ 替換：把 photo-placeholder 換成 <img src="..."> -->
+    <div class="polaroid" style="--rot:-2deg" onclick="openLightbox(this)">
+      <div class="photo-placeholder"><img src="pic/first_date.jpg"></span></div>
+      <div class="polaroid-caption">第一次約會</div>
+    </div>
+    <div class="polaroid" style="--rot:1.5deg" onclick="openLightbox(this)">
+      <div class="photo-placeholder"><img src="pic/cute.jpg"></span></div>
+      <div class="polaroid-caption">第一次拍貼機</div>
+    </div>
+    <div class="polaroid" style="--rot:-1deg" onclick="openLightbox(this)">
+      <div class="photo-placeholder"><img src="pic/couple.jpg"></span></div>
+      <div class="polaroid-caption">穿情侶裝</div>
+    </div>
+    <div class="polaroid" style="--rot:2.5deg" onclick="openLightbox(this)">
+      <div class="photo-placeholder"><img src="pic/love_eye.jpg"></span></div>
+      <div class="polaroid-caption">愛的眼神</div>
+    </div>
+    <div class="polaroid" style="--rot:-1.5deg" onclick="openLightbox(this)">
+      <div class="photo-placeholder"><img src="pic/birthday.jpg"></span></div>
+      <div class="polaroid-caption">慶祝生日</div>
+    </div>
+    <div class="polaroid" style="--rot:1deg" onclick="openLightbox(this)">
+      <div class="photo-placeholder"><img src="pic/jellycat.jpg"></span></div>
+      <div class="polaroid-caption">最重要的人&JellyCat</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════
+     SCENE 5 ─ 真情告白
+══════════════════════════════════ -->
+<section id="scene-5" class="scene">
+  <div class="letter">
+    <div class="letter-icon">💌</div>
+    <div class="letter-title">
+      <!-- ★ 替換成你的標題 -->
+      謝謝你陪我走過這 100 天
+    </div>
+    <div class="letter-body">
+      <!-- ★ 替換成告白內容 -->
+      雖然我們有時候會吵吵鬧鬧，但我真的好珍惜和你在一起的每一刻。<br><br>
+      期待未來的日子裡，我們可以一起創造更多回憶，繼續牽著手走下去。<br><br>
+      知道你最近正在經歷人生重要轉捩點，不管畢業也好，找工作也好，<br><br>
+      或是其他挑戰，我都會在你身邊支持你、陪伴你。<br><br>
+      很多話平常都在說，但我還是想在這裡正式說一次：<br><br>
+      超級愛你！謝謝你這 100 天來的陪伴，未來也請多多指教了！<br><br>
+    </div>
+    <div class="letter-sign">
+      <!-- ★ 替換成你的名字 -->
+      愛你的 阿笨
+    </div>
+    <div class="date-back">
+      <!-- ★ 替換成見面日期 -->
+      期待明天見到妳 ✦ 2026.04.23
+    </div>
+    <button class="heart-btn" onclick="shootHearts()">♡ &nbsp;點我有驚喜</button>
+  </div>
+</section>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <button id="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightbox-img" src="" alt="放大照片">
+</div>
+
+<script>
+/* ═══════════ Scene 控制 ═══════════ */
+let cur = 1;
+const TOTAL   = 5;
+const nextBtn = document.getElementById('next-btn');
+const prevBtn = document.getElementById('prev-btn');
+const dots    = document.querySelectorAll('.dot');
+
+function goTo(n) {
+  document.getElementById(`scene-${cur}`).classList.remove('active');
+  dots[cur - 1].classList.remove('active');
+  cur = n;
+  document.getElementById(`scene-${cur}`).classList.add('active');
+  dots[cur - 1].classList.add('active');
+
+  prevBtn.classList.toggle('gone', cur === 1);
+  nextBtn.classList.toggle('gone', cur === TOTAL);
+  nextBtn.textContent = cur >= TOTAL - 1 ? '最後一頁 →' : '繼續 →';
+
+  if (cur === 3) animateTimeline();
+}
+
+nextBtn.addEventListener('click', () => { if (cur < TOTAL) goTo(cur + 1); });
+prevBtn.addEventListener('click', () => { if (cur > 1)     goTo(cur - 1); });
+
+// 鍵盤左右鍵
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' && cur < TOTAL) goTo(cur + 1);
+  if (e.key === 'ArrowLeft'  && cur > 1)     goTo(cur - 1);
+});
+
+/* ═══════════ Timeline 動畫 ═══════════ */
+function animateTimeline() {
+  document.querySelectorAll('.tl-item').forEach((el, i) => {
+    el.classList.remove('visible');
+    setTimeout(() => el.classList.add('visible'), 200 + i * 180);
+  });
+}
+
+/* ═══════════ Lightbox ═══════════ */
+function openLightbox(card) {
+  const img = card.querySelector('img');
+  if (!img) return;
+  document.getElementById('lightbox-img').src = img.src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+}
+document.getElementById('lightbox').addEventListener('click', e => {
+  if (e.target.id === 'lightbox') closeLightbox();
+});
+
+/* ═══════════ 花瓣 ═══════════ */
+function spawnPetals(id, n) {
+  const c = document.getElementById(id);
+  for (let i = 0; i < n; i++) {
+    const p = document.createElement('div');
+    p.className = 'petal';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      animation-duration:${4+Math.random()*6}s;
+      animation-delay:${Math.random()*8}s;
+      width:${6+Math.random()*8}px;
+      height:${6+Math.random()*8}px;
+    `;
+    c.appendChild(p);
+  }
+}
+spawnPetals('cover-petals', 16);
+spawnPetals('petals-container', 18);
+
+/* ═══════════ 語言輪播 ═══════════ */
+const langs = [
+  '100 天紀念日','100 days anniversary',
+  '100日記念日','100 Tage Jubiläum',
+  '100 días de amor','100 jours ensemble'
+];
+let li = 0;
+const langEl = document.getElementById('lang-cycle');
+setInterval(() => {
+  langEl.style.opacity = '0';
+  setTimeout(() => {
+    li = (li + 1) % langs.length;
+    langEl.textContent = langs[li];
+    langEl.style.opacity = '1';
+  }, 500);
+}, 2600);
+
+/* ═══════════════════════════════════════════
+   計時器：月份 + 剩餘天 + 總秒數
+   ★ 替換：改成你們在一起的日期
+   月份從 0 開始，例如 12月 = 11
+═══════════════════════════════════════════ */
+const startDate = new Date(2024, 11, 13); // ← 2024年12月13日
+
+function updateCounter() {
+  const now      = new Date();
+  const totalSec = Math.floor((now - startDate) / 1000);
+
+  // 計算幾個月
+  let months = (now.getFullYear() - startDate.getFullYear()) * 12
+             + (now.getMonth() - startDate.getMonth());
+  if (now.getDate() < startDate.getDate()) months--;
+  if (months < 0) months = 0;
+
+  // 剩餘天數
+  const base = new Date(startDate);
+  base.setMonth(base.getMonth() + months);
+  const remainDays = Math.floor((now - base) / 86400000);
+
+  document.getElementById('cnt-months').textContent  = months;
+  document.getElementById('cnt-days').textContent    = remainDays;
+  document.getElementById('cnt-seconds').textContent = totalSec.toLocaleString('zh-TW');
+}
+updateCounter();
+setInterval(updateCounter, 1000);
+
+/* ═══════════ 愛心噴灑 ═══════════ */
+function shootHearts() {
+  const heartPath = 'M 0 -30 c 0 0 20 -45 60 -15 c 40 30 40 95 -60 125 c -100 -30 -100 -95 -60 -125 c 40 -30 60 15 60 15 z';
+  const heart = confetti.shapeFromPath({ path: heartPath });
+  const d = {
+    spread: 360, ticks: 120, gravity: 0.6, decay: 0.92,
+    startVelocity: 28, shapes: [heart],
+    colors: ['#c9746a', '#f5d5cb', '#7a3a35', '#e8b4b8', '#ff8fa3']
+  };
+  confetti({ ...d, particleCount: 50, scalar: 2.2, origin: { x: 0.5, y: 0.65 } });
+  setTimeout(() => confetti({ ...d, particleCount: 35, scalar: 1.8, origin: { x: 0.3, y: 0.75 } }), 350);
+  setTimeout(() => confetti({ ...d, particleCount: 35, scalar: 1.8, origin: { x: 0.7, y: 0.75 } }), 700);
+}
+
+/* ═══════════ 音樂控制 ═══════════ */
+const bgm      = document.getElementById('bgm');
+const musicBtn = document.getElementById('music-btn');
+let playing    = false;
+musicBtn.addEventListener('click', () => {
+  if (!bgm.src || bgm.src === window.location.href) {
+    alert('請先在 HTML 中設定音樂來源 <source src="...">');
+    return;
+  }
+  playing ? bgm.pause() : bgm.play();
+  playing = !playing;
+  musicBtn.classList.toggle('playing', playing);
+  musicBtn.textContent = playing ? '♫' : '♪';
+});
+</script>
+</body>
+</html>
