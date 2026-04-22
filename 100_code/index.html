@@ -683,8 +683,8 @@ setInterval(() => {
    ★ 替換：改成你們在一起的日期
    月份從 0 開始，例如 12月 = 11
 ═══════════════════════════════════════════ */
-const startDate = new Date(2026, 1, 13); // ← 2026年2月13日
-
+const startDate = new Date(2026, 0, 13); // ← 2026年2月13日
+  
 function updateCounter() {
   const now      = new Date();
   const totalSec = Math.floor((now - startDate) / 1000);
