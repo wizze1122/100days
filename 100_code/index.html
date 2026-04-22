@@ -21,6 +21,8 @@
       --muted:  #9e7c78;
       --white:  #fffaf6;
       --shadow: rgba(122,58,53,0.15);
+      --top-ui:    4.5rem;
+      --bottom-ui: 6.5rem;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,7 +42,7 @@
       align-items: center; justify-content: center;
       opacity: 0; pointer-events: none;
       transition: opacity 0.85s ease;
-      padding: 2rem;
+      padding: var(--top-ui) 1.2rem var(--bottom-ui);
     }
     .scene.active { opacity: 1; pointer-events: all; }
 
@@ -334,6 +336,40 @@
       letter-spacing: 0.08em; transition: background 0.3s, color 0.3s, transform 0.2s;
     }
     .heart-btn:hover { background: var(--rose); color: var(--white); transform: scale(1.05); }
+  /* Timeline 可捲動 */
+.timeline {
+  max-height: calc(100dvh - var(--top-ui) - var(--bottom-ui) - 4rem);
+  overflow-y: auto;
+}
+
+/* 相簿可捲動，手機兩欄 */
+.gallery-grid {
+  grid-template-columns: repeat(2, 1fr);
+  max-height: calc(100dvh - var(--top-ui) - var(--bottom-ui) - 4rem);
+  overflow-y: auto;
+}
+@media (min-width: 540px) {
+  .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+/* 告白頁可捲動 */
+.letter {
+  max-height: calc(100dvh - var(--top-ui) - var(--bottom-ui));
+  overflow-y: auto;
+  padding: 0.5rem 0.2rem;
+}
+
+/* 桌機寬螢幕微調 */
+@media (min-width: 768px) {
+  :root {
+    --top-ui:    3.5rem;
+    --bottom-ui: 6rem;
+  }
+  .nav-btn-base { bottom: 3rem; }
+  #next-btn { right: 2.5rem; }
+  #prev-btn { left: 2.5rem; }
+  #progress { bottom: 1.4rem; }
+}
   </style>
 </head>
 <body>
@@ -647,7 +683,7 @@ setInterval(() => {
    ★ 替換：改成你們在一起的日期
    月份從 0 開始，例如 12月 = 11
 ═══════════════════════════════════════════ */
-const startDate = new Date(2024, 11, 13); // ← 2024年12月13日
+const startDate = new Date(2026, 1, 13); // ← 2026年2月13日
 
 function updateCounter() {
   const now      = new Date();
